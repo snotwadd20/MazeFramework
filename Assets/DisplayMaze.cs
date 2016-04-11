@@ -8,6 +8,9 @@ namespace Useless.MazeMaker
         public Maze maze = null;
         public int _seed = -1;
 
+        public int sparsenessPasses = 0;
+        public float loopinessFactor = 0;
+
         public int Width = 5;
         public int Height = 5;
 
@@ -22,6 +25,9 @@ namespace Useless.MazeMaker
                 _seed = System.Math.Abs((int)System.DateTime.Now.Ticks);
 
             maze.Make(_seed);
+            maze.Sparsify(sparsenessPasses);
+            maze.Loopify(loopinessFactor);
+           
 
             if (_DebugPrint)
                 print(maze.ToString());
@@ -38,32 +44,32 @@ namespace Useless.MazeMaker
             UPoint _temp1 = new UPoint(0, 0);
             UPoint _temp2 = new UPoint(0, 0);
 
-            for (int y = maze.tiles.GetLength(1) - 1; y >= 0; y--)
+            for (int y = maze.nodes.GetLength(1) - 1; y >= 0; y--)
             {
-                for (int x = 0; x < maze.tiles.GetLength(0); x++)
+                for (int x = 0; x < maze.nodes.GetLength(0); x++)
                 {
-                    if (maze.isFlagged(maze.tiles[x, y].links, Maze.UP))
+                    if (maze.isFlagged(maze.nodes[x, y].links, Maze.UP))
                     {
                         _temp1 = offset + (new UPoint(x, y));
                         _temp2 = offset + (new UPoint(x, y + 1));
                         Debug.DrawLine(_temp1, _temp2);
                     }//if
 
-                    if (maze.isFlagged(maze.tiles[x, y].links, Maze.RIGHT))
+                    if (maze.isFlagged(maze.nodes[x, y].links, Maze.RIGHT))
                     {
                         _temp1 = offset + (new UPoint(x, y));
                         _temp2 = offset + (new UPoint(x + 1, y));
                         Debug.DrawLine(_temp1, _temp2);
                     }//if
 
-                    if (maze.isFlagged(maze.tiles[x, y].links, Maze.DOWN))
+                    if (maze.isFlagged(maze.nodes[x, y].links, Maze.DOWN))
                     {
                         _temp1 = offset + (new UPoint(x, y));
                         _temp2 = offset + (new UPoint(x, y - 1));
                         Debug.DrawLine(_temp1, _temp2);
                     }//if
 
-                    if (maze.isFlagged(maze.tiles[x, y].links, Maze.LEFT))
+                    if (maze.isFlagged(maze.nodes[x, y].links, Maze.LEFT))
                     {
                         _temp1 = offset + (new UPoint(x, y));
                         _temp2 = offset + (new UPoint(x - 1, y));

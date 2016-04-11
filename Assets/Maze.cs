@@ -4,12 +4,11 @@ using System.Collections.Generic;
 
 namespace Useless.MazeMaker
 {
-    public class TileData
+    public class NodeData
     {
         public UPoint index = null;
-        public int tileNumber = Maze.UNVISITED;
         public int links = Maze.UNVISITED; //-1 means hasn't been checked for links yet
-
+        public NodeData(UPoint _index) { index = _index; }
 
     }//MapTileData
 
@@ -29,7 +28,7 @@ namespace Useless.MazeMaker
 
         //public int seed = -1;
         //public RandomSeed r = null;
-        public TileData[,] tiles = null;
+        public NodeData[,] nodes = null;
 
         public UPoint startPos = null;
 
@@ -48,11 +47,11 @@ namespace Useless.MazeMaker
         public void Make(int seed)
         {
             r = new RandomSeed(seed);
-            tiles = new TileData[Width, Height];
+            nodes = new NodeData[Width, Height];
 
-            for (int x = 0; x < tiles.GetLength(0); x++)
-                for (int y = 0; y < tiles.GetLength(1); y++)
-                    tiles[x, y] = new TileData();
+            for (int x = 0; x < nodes.GetLength(0); x++)
+                for (int y = 0; y < nodes.GetLength(1); y++)
+                    nodes[x, y] = new NodeData(new UPoint(x, y));
 
             DijkstraMaze();
         }
@@ -61,22 +60,22 @@ namespace Useless.MazeMaker
         {
             List<UPoint> frontiers = new List<UPoint>();
             //Choose a starting point for maze gen
-            UPoint startingNode = new UPoint(r.getIntInRange(0, tiles.GetLength(0) - 1), r.getIntInRange(0, tiles.GetLength(1) - 1));
-            tiles[startingNode.ix, startingNode.iy].links = VISITED; //Visited
+            UPoint startingNode = new UPoint(r.getIntInRange(0, nodes.GetLength(0) - 1), r.getIntInRange(0, nodes.GetLength(1) - 1));
+            nodes[startingNode.ix, startingNode.iy].links = VISITED; //Visited
 
             startPos = startingNode;
 
             addUnvisitedToList(startingNode, ref frontiers);
             foreach (UPoint frontier in frontiers)
             {
-                tiles[frontier.ix, frontier.iy].links = IN_FRONTIERS;
+                nodes[frontier.ix, frontier.iy].links = IN_FRONTIERS;
             }//foreach
 
             while (frontiers.Count > 0)
             {
                 //Choose a frontier at random   
                 UPoint frontier = randomPointFromList(ref frontiers);
-                tiles[frontier.ix, frontier.iy].links = VISITED; //Visited
+                nodes[frontier.ix, frontier.iy].links = VISITED; //Visited
 
                 //Choose a neighbor (that is not a frontier) at random
                 List<UPoint> nonFrontiersTemp = new List<UPoint>();
@@ -97,7 +96,7 @@ namespace Useless.MazeMaker
                 for (int i = 0; i < unvisitedNeighbors.Count; i++)
                 {
                     frontiers.Add(unvisitedNeighbors[i]);
-                    tiles[unvisitedNeighbors[i].ix, unvisitedNeighbors[i].iy].links = IN_FRONTIERS;
+                    nodes[unvisitedNeighbors[i].ix, unvisitedNeighbors[i].iy].links = IN_FRONTIERS;
                 }//for
             }//while
         }//generateMaze
@@ -112,8 +111,8 @@ namespace Useless.MazeMaker
         {
             if (dataBounds)
             {
-                return (x >= 0 && x < tiles.GetLength(0) &&
-                        y >= 0 && y < tiles.GetLength(1));
+                return (x >= 0 && x < nodes.GetLength(0) &&
+                        y >= 0 && y < nodes.GetLength(1));
             }//if
 
 
@@ -135,7 +134,7 @@ namespace Useless.MazeMaker
             for (int i = 1; i <= 8; i *= 2)
             {
                 UPoint pt = findNeighbor(center, i);
-                if (inBounds(pt, true) && tiles[pt.ix, pt.iy].links == UNVISITED) // UP
+                if (inBounds(pt, true) && nodes[pt.ix, pt.iy].links == UNVISITED) // UP
                 {
                     list.Add(pt);
                     frontiersAdded++;
@@ -153,7 +152,7 @@ namespace Useless.MazeMaker
             for (int i = 1; i <= 8; i *= 2)
             {
                 UPoint pt = findNeighbor(center, i);
-                if (inBounds(pt, true) && tiles[pt.ix, pt.iy].links >= VISITED) // UP
+                if (inBounds(pt, true) && nodes[pt.ix, pt.iy].links >= VISITED) // UP
                 {
                     list.Add(pt);
                     nonFrontiersAdded++;
@@ -201,7 +200,7 @@ namespace Useless.MazeMaker
         }//isLinkedInDir
         public bool isLinkedInDir(int x, int y, int dir)
         {
-            return (tiles[x, y].links & dir) > 0;
+            return (nodes[x, y].links & dir) > 0;
         }//isLinkedInDir
 
         //-------------------------------
@@ -220,73 +219,73 @@ namespace Useless.MazeMaker
             if (cellB.iy > cellA.iy)
             {
                 //Cell B is above Cell A
-                tiles[cellA.ix, cellA.iy].links |= UP;
-                tiles[cellB.ix, cellB.iy].links |= DOWN;
+                nodes[cellA.ix, cellA.iy].links |= UP;
+                nodes[cellB.ix, cellB.iy].links |= DOWN;
             }//if
             else if (cellB.iy < cellA.iy)
             {
                 //Cell B is below Cell A
-                tiles[cellA.ix, cellA.iy].links |= DOWN;
-                tiles[cellB.ix, cellB.iy].links |= UP;
+                nodes[cellA.ix, cellA.iy].links |= DOWN;
+                nodes[cellB.ix, cellB.iy].links |= UP;
             }//else if
             else if (cellB.ix > cellA.ix)
             {
                 //Cell B is to the right of Cell A
-                tiles[cellA.ix, cellA.iy].links |= RIGHT;
-                tiles[cellB.ix, cellB.iy].links |= LEFT;
+                nodes[cellA.ix, cellA.iy].links |= RIGHT;
+                nodes[cellB.ix, cellB.iy].links |= LEFT;
             }//else if
             else if (cellB.ix < cellA.ix)
             {
                 //Cell B is to the left of Cell A
-                tiles[cellA.ix, cellA.iy].links |= LEFT;
-                tiles[cellB.ix, cellB.iy].links |= RIGHT;
+                nodes[cellA.ix, cellA.iy].links |= LEFT;
+                nodes[cellB.ix, cellB.iy].links |= RIGHT;
             }//else if
         }//linkNeighbors
 
         //-------------------------------
-        public void unlinkAllNeighbors(ref UPoint cell)
+        public void unlinkAllNeighbors(UPoint cell)
         {
             //Cell B is above Cell A
-            tiles[cell.ix, cell.iy].links &= ~UP;
-            tiles[cell.ix, cell.iy].links &= ~DOWN;
-            tiles[cell.ix, cell.iy].links &= ~RIGHT;
-            tiles[cell.ix, cell.iy].links &= ~LEFT;
+            nodes[cell.ix, cell.iy].links &= ~UP;
+            nodes[cell.ix, cell.iy].links &= ~DOWN;
+            nodes[cell.ix, cell.iy].links &= ~RIGHT;
+            nodes[cell.ix, cell.iy].links &= ~LEFT;
 
 
             if (cell.y - 1 >= 0)
-                tiles[cell.ix, cell.iy - 1].links &= ~UP;
+                nodes[cell.ix, cell.iy - 1].links &= ~UP;
 
-            if (cell.y + 1 < tiles.GetLength(1))
-                tiles[cell.ix, cell.iy + 1].links &= ~DOWN;
+            if (cell.y + 1 < nodes.GetLength(1))
+                nodes[cell.ix, cell.iy + 1].links &= ~DOWN;
 
             if (cell.x - 1 >= 0)
-                tiles[cell.ix - 1, cell.iy].links &= ~RIGHT;
+                nodes[cell.ix - 1, cell.iy].links &= ~RIGHT;
 
-            if (cell.x + 1 < tiles.GetLength(0))
-                tiles[cell.ix + 1, cell.iy].links &= ~LEFT;
+            if (cell.x + 1 < nodes.GetLength(0))
+                nodes[cell.ix + 1, cell.iy].links &= ~LEFT;
         }//unlinkAllNeighbors
 
         //-------------------------------
         public void linkAllNeighbors(ref UPoint cell)
         {
             //Cell B is above Cell A
-            tiles[cell.ix, cell.iy].links |= UP;
-            tiles[cell.ix, cell.iy].links |= DOWN;
-            tiles[cell.ix, cell.iy].links |= RIGHT;
-            tiles[cell.ix, cell.iy].links |= LEFT;
+            nodes[cell.ix, cell.iy].links |= UP;
+            nodes[cell.ix, cell.iy].links |= DOWN;
+            nodes[cell.ix, cell.iy].links |= RIGHT;
+            nodes[cell.ix, cell.iy].links |= LEFT;
 
 
             if (cell.y - 1 >= 0)
-                tiles[cell.ix, cell.iy - 1].links |= UP;
+                nodes[cell.ix, cell.iy - 1].links |= UP;
 
-            if (cell.y + 1 < tiles.GetLength(1))
-                tiles[cell.ix, cell.iy + 1].links |= DOWN;
+            if (cell.y + 1 < nodes.GetLength(1))
+                nodes[cell.ix, cell.iy + 1].links |= DOWN;
 
             if (cell.x - 1 >= 0)
-                tiles[cell.ix - 1, cell.iy].links |= RIGHT;
+                nodes[cell.ix - 1, cell.iy].links |= RIGHT;
 
-            if (cell.x + 1 < tiles.GetLength(0))
-                tiles[cell.ix + 1, cell.iy].links |= LEFT;
+            if (cell.x + 1 < nodes.GetLength(0))
+                nodes[cell.ix + 1, cell.iy].links |= LEFT;
         }//unlinkAllNeighbors
 
         //-------------------------------
@@ -384,22 +383,22 @@ namespace Useless.MazeMaker
 
         public override string ToString()
         {
-            if (tiles == null)
+            if (nodes == null)
                 return "";
 
-            string str = "Map links - " + r.getSeed() + " : " + tiles.GetLength(0) + "x" + tiles.GetLength(1);
+            string str = "Map links - " + r.getSeed() + " : " + nodes.GetLength(0) + "x" + nodes.GetLength(1);
             str += "\n      ";
 
-            for (int x = 0; x < tiles.GetLength(0); x++)
+            for (int x = 0; x < nodes.GetLength(0); x++)
                 str += x.ToString("D2") + ", ";
 
             str += "\n      ----------------------------------------------------------------------------\n";
 
-            for (int y = tiles.GetLength(1) - 1; y >= 0; y--)
+            for (int y = nodes.GetLength(1) - 1; y >= 0; y--)
             {
                 str += y.ToString("D2") + "| ";
-                for (int x = 0; x < tiles.GetLength(0); x++)
-                    str += tiles[x, y].links.ToString("D2") + ", ";
+                for (int x = 0; x < nodes.GetLength(0); x++)
+                    str += nodes[x, y].links.ToString("D2") + ", ";
 
                 str += "\n";
             }//for
@@ -413,6 +412,64 @@ namespace Useless.MazeMaker
             return (bitmask & flag) != 0;
         }//isFlagged
 
-        
+        public void Sparsify(int numCellsVisited)
+        {
+            List<UPoint> culDeSacs = null;
+            while (numCellsVisited > 0)
+            {
+                culDeSacs = FindAllDeadEnds();
+
+                while (culDeSacs.Count > 0)
+                {
+                    unlinkAllNeighbors(randomPointFromList(ref culDeSacs));
+                    numCellsVisited--;
+
+                    if (numCellsVisited <= 0)
+                        break;
+                    //Debug.Log(cell);
+                }//foreach
+
+                if (culDeSacs.Count <= 0)
+                {
+                    break;
+                }//if
+            }//while
+        }//Sparsify
+
+        public List<UPoint> FindAllDeadEnds()
+        {
+            List<UPoint> culDeSacs = new List<UPoint>();
+            for (int y = 0; y < nodes.GetLength(1); y++)
+            {
+                for (int x = 0; x < nodes.GetLength(0); x++)
+                {
+                    if (numLinks(nodes[x, y].links) == 1)
+                    {
+                        culDeSacs.Add(new UPoint(x, y));
+                    }//if
+                }//for
+            }//for
+            return culDeSacs;
+        }//FindAllDeadEnds
+
+        public void Loopify(float amount)
+        {
+            //GO OVER THE MAP AND RANDOMLY LINK A RANDOM NUMBER OF TILES TO NEIGHBORS
+            for (int i = 0; i < Mathf.RoundToInt(nodes.GetLength(0) * amount * 2); i++)
+            {
+                UPoint cell = new UPoint(r.getIntInRange(0, nodes.GetLength(0) - 1), r.getIntInRange(0, nodes.GetLength(1) - 1));
+
+                //int newLinks = tiles[cell.ix, cell.iy].links;
+
+                for (int dir = 1; dir <= LEFT; dir *= 2)
+                {
+                    if (r.getRandom() <= amount && inBounds(findNeighbor(cell, dir), true))
+                    {
+                        linkNeighbors( cell, findNeighbor(cell, dir));
+                    }//if
+                }//while
+            }//for
+        }//Loopify
+
     }//Maze
 }//namespace
